@@ -151,5 +151,39 @@ app.get('/home/pick_color', function(req, res) {
 
 });
 
+app.post('/home/pick_color', function(req, res) {
+	var color_hex = req.body.color_hex;
+	var color_name = req.body.color_name;
+	var color_message = req.body.color_message;
+	var insert_statement = "INSERT INTO favorite_colors(hex_value, name, color_msg) VALUES('" + color_hex + "','" +
+							color_name + "','" + color_message +"') ON CONFLICT DO NOTHING;";
+
+	var color_select = 'select * from favorite_colors;';
+	db.task('get-everything', task => {
+        return task.batch([
+            task.any(insert_statement),
+            task.any(color_select)
+        ]);
+    })
+    .then(info => {
+    	res.render('pages/home',{
+				my_title: "Home Page",
+				data: info[1],
+				color: color_hex,
+				color_msg: color_message
+			})
+    })
+    .catch(err => {
+        // display error message in case an error
+            console.log('error', err);
+            response.render('pages/home', {
+                title: 'Home Page',
+                data: '',
+                color: '',
+                color_msg: ''
+            })
+    });
+});
+
 app.listen(3000);
 console.log('3000 is the magic port');
