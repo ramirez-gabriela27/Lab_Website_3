@@ -218,5 +218,58 @@ app.get('/team_stats', function(req, res) {
 });
 });
 
+app.get('/player_info', function(req, res) {
+    var query = "SELECT * FORM football_players;";
+    db.task('get-everything', task => {
+        return task.batch([
+            task.any(query)
+        ]);
+    })
+    .then(data => {
+  	     res.render('pages/player_info',{
+  			my_title: "Player Info",
+            players_table: data[0],
+            player_info: '',
+            result: ''
+  		})
+    })
+    .catch(err => {
+        console.log('error', err);
+        res.render('pages/team_stats',{
+  			my_title: "Player Info",
+            players_table: '',
+            dropdown_player: '',
+            result: ''
+  		})
+    });
+});
+
+app.get('/player_info/post', function(req, res) {
+    var player_id = req.query.player_choice;
+    var query = 'SELECT * FROM football_players WHERE id=' + player_id + ';';
+    var query2 = 'SELECT COUNT(players) FORM football_games WHERE ' + player_id + '=ANY(players);';
+    db.task('get-everything', task => {
+        return task.batch([
+            task.any(query),
+            task.any(query2)
+        ]);
+    })
+    .then(data => {
+    	res.render('pages/player_info',{
+			my_title: "Player Info",
+            players_table: data[0][0],
+            result: data[1][0].count
+		})
+    })
+    .catch(err => {
+        console.log('error', err);
+        res.render('pages/player_info',{
+			my_title: "Player Info",
+            players_table: '',
+            result: ''
+		})
+    });
+});
+
 app.listen(3000);
 console.log('3000 is the magic port');
