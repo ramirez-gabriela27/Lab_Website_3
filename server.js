@@ -185,5 +185,38 @@ app.post('/home/pick_color', function(req, res) {
     });
 });
 
+app.get('/team_stats', function(req, res) {
+	var query1 = 'SELECT * FROM football_games;';
+	var query2 = 'SELECT COUNT(*) FROM football_games WHERE home_score > visitor_score;';
+	var query3 = 'SELECT COUNT(*) FROM football_games WHERE home_score < visitor_score;';
+	db.task('get-everything', task => {
+    return task.batch([
+        task.any(query1),
+        task.any(query2),
+        task.any(query3)
+    ]);
+})
+.then(data => {
+	res.render('pages/team_stats',{
+			my_title: "Team Stats",
+			result_1: data[0],
+			result_2: data[1],
+			result_3: data[2],
+            win: data[1][0],
+            loss: data[2][0]
+		})
+})
+.catch(err => {
+    // display error message in case an error
+        console.log('error', err);
+        res.render('pages/team_stats',{
+			my_title: "Team Stats",
+			result_1: '',
+			result_2: '',
+			result_3: '',
+		})
+});
+});
+
 app.listen(3000);
 console.log('3000 is the magic port');
